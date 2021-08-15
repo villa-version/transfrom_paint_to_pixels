@@ -27,7 +27,7 @@ class Paint(Object):
         Object.__init__(self, x, y, screen)
 
     def draw(self):
-        pygame.draw.circle(self.screen, (111, 111, 222), (self.x, self.y), CELL_SIZE/4)
+        pygame.draw.circle(self.screen, (111, 111, 222), (self.x, self.y), CELL_SIZE / 4)
 
 
 class MainController:
@@ -37,6 +37,8 @@ class MainController:
         self.spawn_grid()
         self.draw_line = []
         self.paint_state = False
+        self.last_m_pos_x = None
+        self.last_m_pos_y = None
 
     def update(self):
         self.draw_elem()
@@ -57,7 +59,9 @@ class MainController:
     def to_paint(self):
         if self.paint_state:
             m_pos = pygame.mouse.get_pos()
-            self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen))
+            if m_pos[0] != self.last_m_pos_x and m_pos[1] != self.last_m_pos_y:
+                self.last_m_pos_x, self.last_m_pos_y = m_pos[0], m_pos[1]
+                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen))
 
     def transform_paint_to_pixel(self):
         if not self.paint_state:
@@ -66,8 +70,8 @@ class MainController:
                     bx = block.x * CELL_SIZE
                     by = block.y * CELL_SIZE
                     if bx < blob.x < bx + CELL_SIZE and by < blob.y < by + CELL_SIZE:
-                        blob.x = bx + CELL_SIZE/2
-                        blob.y = by + CELL_SIZE/2
+                        blob.x = bx + CELL_SIZE / 2
+                        blob.y = by + CELL_SIZE / 2
 
 
 def main():
