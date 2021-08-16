@@ -41,10 +41,12 @@ class MainController:
         self.last_m_pos_x = None
         self.last_m_pos_y = None
         self.color_state = ''
+        self.colors = [0, 0, 0]
 
     def update(self):
         self.draw_elem()
         self.to_paint()
+        self.check_color()
 
     def draw_elem(self):
         for block in self.grid:
@@ -58,19 +60,20 @@ class MainController:
             for x in r:
                 self.grid.append(Grid(x, y, self.screen))
 
+    def check_color(self):
+        if self.color_state == 'RED':
+            self.colors = [255, 0, 0]
+        elif self.color_state == 'GREEN':
+            self.colors = [0, 255, 0]
+        elif self.color_state == 'BLUE':
+            self.colors = [0, 0, 255]
+
     def to_paint(self):
-        colors = [0, 0, 0]
         if self.paint_state:
-            if self.color_state == 'RED':
-                colors = [255, 0, 0]
-            elif self.color_state == 'GREEN':
-                colors = [0, 255, 0]
-            elif self.color_state == 'BLUE':
-                colors = [0, 0, 255]
             m_pos = pygame.mouse.get_pos()
             if m_pos[0] != self.last_m_pos_x and m_pos[1] != self.last_m_pos_y:
                 self.last_m_pos_x, self.last_m_pos_y = m_pos[0], m_pos[1]
-                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen, colors))
+                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen, self.colors))
 
     def remove_paint(self):
         self.draw_line = self.draw_line[:-1]
@@ -111,7 +114,6 @@ def main():
                     main_controller.color_state = 'GREEN'
                 elif event.key == pygame.K_3:
                     main_controller.color_state = 'BLUE'
-
 
         screen.fill((255, 255, 255))
         main_controller.update()
