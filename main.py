@@ -23,11 +23,12 @@ class Grid(Object):
 
 
 class Paint(Object):
-    def __init__(self, x, y, screen):
+    def __init__(self, x, y, screen, mass_colors):
         Object.__init__(self, x, y, screen)
+        self.mass_colors = mass_colors
 
     def draw(self):
-        pygame.draw.circle(self.screen, (111, 111, 222), (self.x, self.y), CELL_SIZE / 4)
+        pygame.draw.circle(self.screen, (self.mass_colors[0], self.mass_colors[1], self.mass_colors[2]), (self.x, self.y), CELL_SIZE / 4)
 
 
 class MainController:
@@ -39,6 +40,7 @@ class MainController:
         self.paint_state = False
         self.last_m_pos_x = None
         self.last_m_pos_y = None
+        self.color_state = ''
 
     def update(self):
         self.draw_elem()
@@ -57,11 +59,21 @@ class MainController:
                 self.grid.append(Grid(x, y, self.screen))
 
     def to_paint(self):
+        colors = [0, 0, 0]
         if self.paint_state:
+            if self.color_state == 'RED':
+                colors = [255, 0, 0]
+            elif self.color_state == 'GREEN':
+                colors = [0, 255, 0]
+            elif self.color_state == 'BLUE':
+                colors = [0, 0, 255]
             m_pos = pygame.mouse.get_pos()
             if m_pos[0] != self.last_m_pos_x and m_pos[1] != self.last_m_pos_y:
                 self.last_m_pos_x, self.last_m_pos_y = m_pos[0], m_pos[1]
-                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen))
+                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen, colors))
+
+    def remove_paint(self):
+        self.draw_line = self.draw_line[:-1]
 
     def transform_paint_to_pixel(self):
         if not self.paint_state:
@@ -69,7 +81,7 @@ class MainController:
                 for blob in self.draw_line:
                     bx = block.x * CELL_SIZE
                     by = block.y * CELL_SIZE
-                    if bx < blob.x < bx + CELL_SIZE and by < blob.y < by + CELL_SIZE:
+                    if bx < blob.x < bx + CELL_SIZE+5 and by < blob.y < by + CELL_SIZE+5:
                         blob.x = bx + CELL_SIZE / 2
                         blob.y = by + CELL_SIZE / 2
 
@@ -91,6 +103,15 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     main_controller.transform_paint_to_pixel()
+                elif event.key == pygame.K_z:
+                    main_controller.remove_paint()
+                elif event.key == pygame.K_1:
+                    main_controller.color_state = 'RED'
+                elif event.key == pygame.K_2:
+                    main_controller.color_state = 'GREEN'
+                elif event.key == pygame.K_3:
+                    main_controller.color_state = 'BLUE'
+
 
         screen.fill((255, 255, 255))
         main_controller.update()
