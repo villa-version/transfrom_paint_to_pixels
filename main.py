@@ -12,8 +12,9 @@ class Object:
 
 
 class Grid(Object):
-    def __init__(self, x, y, screen):
+    def __init__(self, x, y, screen, mass_blob):
         Object.__init__(self, x, y, screen)
+        self.mass_blob = mass_blob
 
     def draw(self):
         for i in range(2):
@@ -22,7 +23,7 @@ class Grid(Object):
             pygame.draw.rect(self.screen, (111 * (i + 1), 213, 222), obj)
 
 
-class Paint(Object):
+class Point(Object):
     def __init__(self, x, y, screen, mass_colors):
         Object.__init__(self, x, y, screen)
         self.mass_colors = mass_colors
@@ -49,17 +50,19 @@ class MainController:
         self.check_color()
 
     def draw_elem(self):
-        for block in self.grid:
-            block.draw()
+        for row in self.grid:
+            for block in row:
+                block.draw()
         for blob in self.draw_line:
             blob.draw()
-        #print(len(self.draw_line))
 
     def spawn_grid(self):
         r = range(CELL_NUMBER)
+        for _ in r:
+            self.grid.append([])
         for y in r:
             for x in r:
-                self.grid.append(Grid(x, y, self.screen))
+                self.grid[y].append(Grid(x, y, self.screen, []))
 
     def check_color(self):
         if self.color_state == 'RED':
@@ -71,35 +74,39 @@ class MainController:
 
     def to_paint(self):
         if self.paint_state:
-            m_pos = pygame.mouse.get_pos()
-            if m_pos[0] != self.last_m_pos_x and m_pos[1] != self.last_m_pos_y:
-                self.last_m_pos_x, self.last_m_pos_y = m_pos[0], m_pos[1]
-                self.draw_line.append(Paint(m_pos[0], m_pos[1], self.screen, self.colors))
+            mx, my = pygame.mouse.get_pos()
+            if mx != self.last_m_pos_x and my != self.last_m_pos_y:
+                block_x = mx//CELL_SIZE
+                block_y = my//CELL_SIZE
+                bx = block_x * CELL_SIZE
+                by = block_y * CELL_SIZE
+                if bx <= int(mx) <= bx + CELL_SIZE and by <= int(my) <= by + CELL_SIZE:
+                    point = Point(mx, my, self.screen, self.colors)
+                    self.draw_line.append(point)
+                    self.grid[block_y][block_x].mass_blob.append(point)
+                self.last_m_pos_x, self.last_m_pos_y = mx, my
 
     def remove_paint(self):
+        last_point = self.draw_line[-1]
+        x = last_point.x//CELL_SIZE
+        y = last_point.y//CELL_SIZE
+        self.grid[y][x].mass_blob.remove(last_point)
         self.draw_line = self.draw_line[:-1]
 
     def remove_unnecessary_blobs(self):
-        i = 0
-        j = 0
-        while i < len(self.draw_line):
-            j = i+1
-            while j < len(self.draw_line):
-                if self.draw_line[i].x == self.draw_line[j].x and self.draw_line[i].y == self.draw_line[j].y:
-                    del self.draw_line[j]
-                else:
-                    j += 1
-            i += 1
+        for row in self.grid:
+            for block in row:
+                for point in block.mass_blob[1:]:
+                    self.draw_line.remove(point)
+                block.mass_blob = block.mass_blob[0:1]
 
     def transform_paint_to_pixel(self):
         if not self.paint_state:
-            for block in self.grid:
-                for blob in self.draw_line:
-                    bx = block.x * CELL_SIZE
-                    by = block.y * CELL_SIZE
-                    if bx <= blob.x <= bx + CELL_SIZE and by <= blob.y <= by + CELL_SIZE:
-                        blob.x = bx + CELL_SIZE / 2
-                        blob.y = by + CELL_SIZE / 2
+            for row in self.grid:
+                for block in row:
+                    for blob in block.mass_blob:
+                        blob.x = block.x * CELL_SIZE + CELL_SIZE // 2
+                        blob.y = block.y * CELL_SIZE + CELL_SIZE // 2
 
 
 def main():
@@ -118,8 +125,8 @@ def main():
                 main_controller.paint_state = not main_controller.paint_state
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
-                    main_controller.transform_paint_to_pixel()
                     main_controller.remove_unnecessary_blobs()
+                    main_controller.transform_paint_to_pixel()
                 elif event.key == pygame.K_z:
                     main_controller.remove_paint()
                 elif event.key == pygame.K_1:
