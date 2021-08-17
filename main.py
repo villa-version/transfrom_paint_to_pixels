@@ -81,7 +81,7 @@ class MainController:
 
     def remove_unnecessary_blobs(self):
         i = 0
-        j = 1
+        j = 0
         while i < len(self.draw_line):
             j = i+1
             while j < len(self.draw_line):
@@ -97,7 +97,7 @@ class MainController:
                 for blob in self.draw_line:
                     bx = block.x * CELL_SIZE
                     by = block.y * CELL_SIZE
-                    if bx < blob.x < bx + CELL_SIZE + 5 and by < blob.y < by + CELL_SIZE + 5:
+                    if bx <= blob.x <= bx + CELL_SIZE and by <= blob.y <= by + CELL_SIZE:
                         blob.x = bx + CELL_SIZE / 2
                         blob.y = by + CELL_SIZE / 2
 
